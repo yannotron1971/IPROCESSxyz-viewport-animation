@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Intro Overlay Test</title>
+    <style>
+        #intro-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: black;
+            display: none;
+        }
+
+        #intro-stage {
+            width: 100%;
+            height: 100%;
+        }
+
+        #intro-skip {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            z-index: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="intro-overlay">
+        <div id="intro-stage"></div>
+        <button id="intro-skip">Skip</button>
+    </div>
+    <!-- your main content here -->
+    <!-- your main content here -->
+    <script src="IPROCESSxyz-viewport-animation.js"></script>
+</body>
+
+</html>
