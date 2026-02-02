@@ -1,6 +1,6 @@
 (() => {
   // Configuration, local/session storage etc.
-  const STORAGE_KEY = "ipx_intro_seen_v1";
+  const STORAGE_KEY = "iprocess_intro_shown";
   const USE_SESSION_STORAGE = false; // "false" means localStorage (once per device), "true" means sessionStorage (once per session)
   const EXPIRY_DAYS = 30; // null to never expire
   const AUTO_HIDE_MS = null; // null to require manual skip
@@ -41,17 +41,6 @@
     });
   }
 
-  function showOverlay() {
-    const overlay = document.getElementById("intro-overlay");
-    if (overlay) overlay.style.display = "block";
-  }
-
-  function hideOverlay() {
-    const overlay = document.getElementById("intro-overlay");
-    if (overlay) overlay.style.display = "none";
-    cleanupStage();
-    markSeen();
-  }
 
   function cleanupStage() {
     const stage = document.getElementById("intro-stage");
@@ -1719,10 +1708,9 @@
   }
 
   async function run() {
-    // if (hasSeen()) return;
+    if (hasSeen()) return;
 
     const stage = document.getElementById("intro-stage");
-    const skip = document.getElementById("intro-skip");
 
     if (!stage) return; // overlay not present
 
@@ -1756,10 +1744,6 @@
     } catch (e) {
       hideOverlay();
       return;
-    }
-
-    if (AUTO_HIDE_MS != null) {
-      setTimeout(() => hideOverlay(), AUTO_HIDE_MS);
     }
   }
 
