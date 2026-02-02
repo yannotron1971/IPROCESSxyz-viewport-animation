@@ -1,7 +1,7 @@
 (() => {
   // Configuration, local/session storage etc.
   const STORAGE_KEY = "iprocess_intro_shown";
-  const USE_SESSION_STORAGE = false; // "false" means localStorage (once per device), "true" means sessionStorage (once per session)
+  const USE_SESSION_STORAGE = true; // "false" means localStorage (once per device), "true" means sessionStorage (once per session)
   const EXPIRY_DAYS = 30; // null to never expire
   const AUTO_HIDE_MS = null; // null to require manual skip
 
@@ -41,6 +41,160 @@
     });
   }
 
+
+
+  function cleanupStage() {
+    const stage = document.getElementById("intro-stage");
+    if (stage) {
+      stage.innerHTML = "";
+    }
+  }
+
+  function showOverlay() {
+    const overlay = document.getElementById("intro-overlay");
+    if (overlay) {
+      overlay.style.display = "block";
+      overlay.style.visibility = "visible";
+      document.documentElement.classList.add('is-intro-loading');
+    }
+  }
+
+  function hideOverlay() {
+    const overlay = document.getElementById("intro-overlay");
+    if (overlay) {
+      overlay.style.display = "none";
+      overlay.style.visibility = "hidden";
+      document.documentElement.classList.remove('is-intro-loading');
+    }
+    cleanupStage();
+    markSeen();
+  }
+
+  // GSAP Intro Logic
+  async function runIntroAnimation() {
+    if (!window.gsap) {
+      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js");
+    }
+
+    // Configuration from snippet
+    const CONFIG = {
+      logoText: 'IPROCESSxyz',
+      goldStartIndex: 8,
+      scrambleChars: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+      scrambleCharsLower: 'abcdefghijklmnopqrstuvwxyz0123456789',
+      charRevealStagger: 0.025,
+      scrambleSpeed: 50,
+      resolveDelay: 100,
+      holdDuration: 0.8,
+      safetyTimeout: 4000
+    };
+
+    const overlay = document.querySelector('.intro-overlay'); // or #intro-overlay
+    const logo = document.querySelector('.intro-logo');
+    const loader = document.querySelector('.intro-loader');
+    const loaderBar = document.querySelector('.intro-loader-bar');
+
+    if (!overlay || !logo) {
+      console.warn('[Intro] Required elements not found');
+      hideOverlay();
+      return;
+    }
+
+    // Split logo text
+    let logoHTML = '';
+    for (let i = 0; i < CONFIG.logoText.length; i++) {
+      const char = CONFIG.logoText[i];
+      const isGold = i >= CONFIG.goldStartIndex;
+      const scrambleSet = isGold ? CONFIG.scrambleCharsLower : CONFIG.scrambleChars;
+      const randomChar = scrambleSet[Math.floor(Math.random() * scrambleSet.length)];
+      const goldClass = isGold ? ' is-gold' : '';
+      logoHTML += `<span class="char${goldClass}" data-target="${char}">${randomChar}</span>`;
+    }
+    logo.innerHTML = logoHTML;
+    // logo.classList.add('is-ready'); // logic from snippet
+
+    const chars = logo.querySelectorAll('.char');
+
+    // Set initial states
+    gsap.set(chars, { opacity: 0, y: 12 });
+    if (loader) gsap.set(loader, { opacity: 0 });
+    if (loaderBar) gsap.set(loaderBar, { width: '0%' });
+
+    // Scramble Function
+    function scrambleText(charElements) {
+      return new Promise((resolve) => {
+        let currentIndex = 0;
+        const scrambleIntervals = [];
+
+        // Start scrambling
+        for (let i = 0; i < charElements.length; i++) {
+          ((index) => {
+            const el = charElements[index];
+            const isGold = el.classList.contains('is-gold');
+            const scrambleSet = isGold ? CONFIG.scrambleCharsLower : CONFIG.scrambleChars;
+            scrambleIntervals[index] = setInterval(() => {
+              el.textContent = scrambleSet[Math.floor(Math.random() * scrambleSet.length)];
+            }, CONFIG.scrambleSpeed);
+          })(i);
+        }
+
+        // Resolve one by one
+        function resolveNext() {
+          if (currentIndex >= charElements.length) {
+            resolve();
+            return;
+          }
+          const el = charElements[currentIndex];
+          clearInterval(scrambleIntervals[currentIndex]);
+          el.textContent = el.dataset.target;
+          currentIndex++;
+          setTimeout(resolveNext, CONFIG.resolveDelay);
+        }
+        setTimeout(resolveNext, 400);
+      });
+    }
+
+    // Slide Out Function
+    function slideOutOverlay() {
+      gsap.to(overlay, {
+        yPercent: -100,
+        duration: 0.7,
+        ease: 'power3.inOut',
+        onComplete: () => {
+          hideOverlay(); // This handles display:none and markSeen()
+          // window.dispatchEvent(new CustomEvent('introComplete'));
+        }
+      });
+    }
+
+    // Main Animation Sequence
+    const tl = gsap.timeline();
+    if (loader) {
+      tl.to(loader, { opacity: 1, duration: 0.25, ease: 'power2.out' });
+    }
+    tl.to(chars, {
+      opacity: 1, y: 0, duration: 0.4, stagger: CONFIG.charRevealStagger, ease: 'power3.out'
+    }, 0.1);
+    if (loaderBar) {
+      tl.to(loaderBar, { width: '100%', duration: 2.0, ease: 'power1.inOut' }, 0.2);
+    }
+
+    // Run scramble then slide out
+    setTimeout(() => {
+      scrambleText(chars).then(() => {
+        setTimeout(slideOutOverlay, CONFIG.holdDuration * 1000);
+      });
+    }, 350);
+
+    // Safety fallback
+    setTimeout(() => {
+      const style = window.getComputedStyle(overlay);
+      if (style.display !== 'none' && style.visibility !== 'hidden') {
+        console.warn('[Intro] Safety timeout triggered');
+        slideOutOverlay();
+      }
+    }, CONFIG.safetyTimeout);
+  }
 
   function cleanupStage() {
     const stage = document.getElementById("intro-stage");
@@ -150,7 +304,7 @@
             }
           },
           interactivity: {
-            detect_on: "canvas",
+            detect_on: "window",
             events: {
               onhover: {
                 enable: true,
@@ -488,7 +642,7 @@
             this.element = element;
 
             var that = this;
-            element.addEventListener('mousemove', function (event) {
+            window.addEventListener('mousemove', function (event) {
               var dot, eventDoc, doc, body, pageX, pageY;
               event = event || window.event;
               if (event.pageX == null && event.clientX != null) {
@@ -1063,10 +1217,10 @@
         // Add event listeners to the stage instead of document
         // We use 'mousedown' for clicks to catch button state more easily if desired, 
         // but user had specific handlers.
-        stage.addEventListener('mousedown', handleLeftClick);
-        stage.addEventListener('contextmenu', handleRightClick);
-        stage.addEventListener('mousedown', handleMiddleClick);
-        stage.addEventListener('mousemove', handleHover);
+        window.addEventListener('mousedown', handleLeftClick);
+        window.addEventListener('contextmenu', handleRightClick);
+        window.addEventListener('mousedown', handleMiddleClick);
+        window.addEventListener('mousemove', handleHover);
       }
     },
     // Pen 6 - Pointer Particles
@@ -1189,7 +1343,7 @@
           setupEvents() {
             const parent = this.parentNode;
 
-            parent.addEventListener("click", (event) => {
+            window.addEventListener("click", (event) => {
               this.createParticles(event, {
                 count: 300,
                 speed: Math.random() + 1,
@@ -1197,7 +1351,7 @@
               });
             });
 
-            parent.addEventListener("contextmenu", (event) => {
+            window.addEventListener("contextmenu", (event) => {
               event.preventDefault(); // Prevent the default context menu
               this.createParticles(event, {
                 count: 300,
@@ -1206,7 +1360,7 @@
               });
             });
 
-            parent.addEventListener("mousedown", (event) => {
+            window.addEventListener("mousedown", (event) => {
               if (event.button === 1) {
                 // Check if the middle mouse button is pressed
                 this.createParticles(event, {
@@ -1217,7 +1371,7 @@
               }
             });
 
-            parent.addEventListener("pointermove", (event) => {
+            window.addEventListener("pointermove", (event) => {
               this.createParticles(event, {
                 count: 20,
                 speed: this.getPointerVelocity(event),
@@ -1305,25 +1459,7 @@
           y: undefined
         }
 
-        function handleMouseMove(event) {
-          const rect = canvas.getBoundingClientRect();
-          mouse.x = event.clientX - rect.left;
-          mouse.y = event.clientY - rect.top;
-
-          for (let i = 0; i < bNum; i++) {
-            spots.push(new Particle());
-          }
-        }
-
-        stage.addEventListener("mousemove", handleMouseMove);
-
-        function handleResize() {
-          canvas.width = stage.clientWidth;
-          canvas.height = stage.clientHeight;
-        }
-
-        window.addEventListener("resize", handleResize);
-
+        // Generate initial particles so it's not empty
         class Particle {
           constructor() {
             this.x = mouse.x;
@@ -1351,6 +1487,36 @@
             if (this.size > bDep) this.size -= bDep;
           }
         }
+
+        console.log("Bubbles Pen: Generating initial particles");
+        for (let i = 0; i < 20; i++) {
+          mouse.x = Math.random() * canvas.width;
+          mouse.y = Math.random() * canvas.height;
+          for (let j = 0; j < bNum; j++) {
+            spots.push(new Particle());
+          }
+        }
+
+        function handleMouseMove(event) {
+          const rect = canvas.getBoundingClientRect();
+          mouse.x = event.clientX - rect.left;
+          mouse.y = event.clientY - rect.top;
+
+          for (let i = 0; i < bNum; i++) {
+            spots.push(new Particle());
+          }
+        }
+
+        window.addEventListener("mousemove", handleMouseMove);
+
+        function handleResize() {
+          canvas.width = stage.clientWidth;
+          canvas.height = stage.clientHeight;
+        }
+
+        window.addEventListener("resize", handleResize);
+
+
 
         function handleParticle() {
           for (let i = 0; i < spots.length; i++) {
@@ -1426,6 +1592,7 @@
         canvas.addEventListener("mousedown", handleMiddleClick);
       }
     },
+
     // Pen 8 - Connected Particles
     {
       name: "connectedParticles",
@@ -1445,7 +1612,7 @@
           y: undefined
         }
 
-        stage.addEventListener("mousemove", function (event) {
+        window.addEventListener("mousemove", function (event) {
           const rect = canvas.getBoundingClientRect();
           mouse.x = event.clientX - rect.left;
           mouse.y = event.clientY - rect.top;
@@ -1608,7 +1775,7 @@
             holdParticles.push(new Particle());
           }
         }
-        stage.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mousemove', handleMouseMove);
 
         class Particle {
           constructor() {
@@ -1705,45 +1872,36 @@
 
   function pickRandomPen() {
     return pens[Math.floor(Math.random() * pens.length)];
+    // return pens.find(p => p.name === "bubbles"); // Force bubbles for debugging
   }
 
   async function run() {
-    if (hasSeen()) return;
-
-    const stage = document.getElementById("intro-stage");
-
-    if (!stage) return; // overlay not present
-
-    showOverlay();
-
-    if (skip) {
-      skip.addEventListener("click", (e) => {
-        e.preventDefault();
-        hideOverlay();
-      }, { once: true });
-    }
-
-    const pen = pickRandomPen();
-    if (!pen) {
-      console.error("No pen selected.");
-      return;
-    }
-    console.log("%c Running Pen: " + pen.name, "background: #222; color: #bada55; font-size: 20px; padding: 10px; border-radius: 5px;");
-
-    for (const dep of pen.deps) {
-      try {
-        await loadScript(dep);
-      } catch (e) {
-        return;
-      }
-    }
-
-    // Mount selected pen
-    try {
-      pen.mount(stage);
-    } catch (e) {
+    // 1. Check if Intro should run
+    if (hasSeen()) {
       hideOverlay();
       return;
+    }
+
+    // 2. Start Intro Animation immediately (Text Scramble)
+    showOverlay();
+    // This is async but we don't wait for it; visuals start immediately
+    runIntroAnimation();
+
+    // 3. Initialize Background Pen (Particles)
+    // Run this in parallel so it doesn't block the intro text start
+    const stage = document.getElementById("intro-stage");
+    if (stage) {
+      const pen = pickRandomPen();
+      if (pen) {
+        console.log("%c Running Pen: " + pen.name, "background: #222; color: #bada55; font-size: 20px; padding: 10px; border-radius: 5px;");
+        // Load dependencies and mount
+        (async () => {
+          for (const dep of pen.deps) {
+            try { await loadScript(dep); } catch (e) { }
+          }
+          try { pen.mount(stage); } catch (e) { }
+        })();
+      }
     }
   }
 

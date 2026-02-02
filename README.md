@@ -1,6 +1,7 @@
 # IPROCESSxyz Viewport Animation
 
-This project contains a collection of interactive JavaScript animations ("pens") designed for the IProcess website viewport.
+This project contains a collection of interactive JavaScript animations ("pens") designed for the IProcess website 
+.
 
 ## Features
 

@@ -10,27 +10,77 @@
             inset: 0;
             z-index: 9999;
             background: black;
-            display: none;
+            display: block;
+            color: white;
         }
 
         #intro-stage {
             width: 100%;
             height: 100%;
+            position: fixed;
+            inset: 0;
+            z-index: 0;
         }
 
-        #intro-skip {
+        .intro-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        .intro-logo {
+            font-family: 'Inter', sans-serif;
+            font-size: 4rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .intro-logo .char {
+            display: inline-block;
+            will-change: transform, opacity;
+        }
+
+        .intro-logo .char.is-gold {
+            color: #FFD700;
+        }
+
+        .intro-loader {
             position: absolute;
-            bottom: 10px;
-            right: 10px;
-            z-index: 1;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .intro-loader-bar {
+            height: 100%;
+            width: 0%;
+            background: #FFD700;
         }
     </style>
 </head>
 
 <body>
-    <div id="intro-overlay">
-        <div id="intro-stage"></div>
-        <button id="intro-skip">Skip</button>
+
+    <!-- Intro Overlay -->
+    <div id="intro-overlay" class="intro-overlay">
+        <!-- Background Animation Stage -->
+        <div id="intro-stage" style="position: absolute; inset: 0; z-index: 0; opacity: 0.4;"></div>
+        <div class="intro-content">
+            <div class="intro-logo">IPROCESSxyz</div> <!-- Will be scrambled by JS -->
+            <div class="intro-loader">
+                <div class="intro-loader-bar"></div>
+            </div>
+        </div>
     </div>
     <!-- your main content here -->
     <!-- your main content here -->
