@@ -5,6 +5,19 @@
 (function () {
     'use strict';
 
+    // Helper to load GSAP if missing
+    function loadScript(src) {
+        return new Promise((resolve, reject) => {
+            if (window.gsap) return resolve(); // Already loaded
+            const s = document.createElement("script");
+            s.src = src;
+            s.async = true;
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
+        });
+    }
+
     // ============ CONFIGURATION ============
     const CONFIG = {
         logoText: 'IPROCESSxyz',
@@ -70,17 +83,7 @@
 
     const chars = logo.querySelectorAll('.char');
 
-    // Set initial states with GSAP
-    gsap.set(chars, {
-        opacity: 0,
-        y: 12
-    });
-    gsap.set(loader, {
-        opacity: 0
-    });
-    gsap.set(loaderBar, {
-        width: '0%'
-    });
+    // Initial GSAP states are now set inside runAnimation() to ensure library is loaded
 
     // ============ ANIMATION FUNCTIONS ============
 
@@ -143,6 +146,11 @@
     // ============ MAIN ANIMATION TIMELINE ============
 
     async function runAnimation() {
+        // Set initial states (moved here to ensure GSAP is loaded)
+        gsap.set(chars, { opacity: 0, y: 12 });
+        gsap.set(loader, { opacity: 0 });
+        gsap.set(loaderBar, { width: '0%' });
+
         const tl = gsap.timeline();
 
         // 1. Fade in loader track
@@ -185,9 +193,21 @@
 
     // Run animation when DOM is ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', runAnimation);
+        document.addEventListener('DOMContentLoaded', () => init());
     } else {
-        runAnimation();
+        init();
+    }
+
+    async function init() {
+        // Ensure GSAP is loaded
+        try {
+            await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js");
+            runAnimation();
+        } catch (e) {
+            console.error("[Intro] Failed to load GSAP", e);
+            // Fallback: remove overlay if GSAP fails
+            slideOutOverlay();
+        }
     }
 
     // Safety fallback - ensure overlay is removed even if something fails
