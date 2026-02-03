@@ -1,34 +1,6 @@
 (() => {
   // Configuration, local/session storage etc.
-  const STORAGE_KEY = "iprocess_intro_shown";
-  const USE_SESSION_STORAGE = true; // "false" means localStorage (once per device), "true" means sessionStorage (once per session)
-  const EXPIRY_DAYS = 30; // null to never expire
-  const AUTO_HIDE_MS = null; // null to require manual skip
 
-  const store = USE_SESSION_STORAGE ? window.sessionStorage : window.localStorage;
-
-  // HELPERS
-  const now = () => Date.now();
-
-  function hasSeen() {
-    try {
-      const raw = store.getItem(STORAGE_KEY);
-      if (!raw) return false;
-      const data = JSON.parse(raw);
-      if (!data || !data.t) return true;
-      if (EXPIRY_DAYS == null) return true;
-      const expiryMs = EXPIRY_DAYS * 24 * 60 * 60 * 1000;
-      return (now() - data.t) < expiryMs;
-    } catch {
-      return false;
-    }
-  }
-
-  function markSeen() {
-    try {
-      store.setItem(STORAGE_KEY, JSON.stringify({ t: now() }));
-    } catch { }
-  }
 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -43,164 +15,7 @@
 
 
 
-  function cleanupStage() {
-    const stage = document.getElementById("intro-stage");
-    if (stage) {
-      stage.innerHTML = "";
-    }
-  }
 
-  function showOverlay() {
-    const overlay = document.getElementById("intro-overlay");
-    if (overlay) {
-      overlay.style.display = "block";
-      overlay.style.visibility = "visible";
-      document.documentElement.classList.add('is-intro-loading');
-    }
-  }
-
-  function hideOverlay() {
-    const overlay = document.getElementById("intro-overlay");
-    if (overlay) {
-      overlay.style.display = "none";
-      overlay.style.visibility = "hidden";
-      document.documentElement.classList.remove('is-intro-loading');
-    }
-    cleanupStage();
-    markSeen();
-  }
-
-  // GSAP Intro Logic
-  async function runIntroAnimation() {
-    if (!window.gsap) {
-      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js");
-    }
-
-    // Configuration from snippet
-    const CONFIG = {
-      logoText: 'IPROCESSxyz',
-      goldStartIndex: 8,
-      scrambleChars: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-      scrambleCharsLower: 'abcdefghijklmnopqrstuvwxyz0123456789',
-      charRevealStagger: 0.025,
-      scrambleSpeed: 50,
-      resolveDelay: 100,
-      holdDuration: 0.8,
-      safetyTimeout: 4000
-    };
-
-    const overlay = document.querySelector('.intro-overlay'); // or #intro-overlay
-    const logo = document.querySelector('.intro-logo');
-    const loader = document.querySelector('.intro-loader');
-    const loaderBar = document.querySelector('.intro-loader-bar');
-
-    if (!overlay || !logo) {
-      console.warn('[Intro] Required elements not found');
-      hideOverlay();
-      return;
-    }
-
-    // Split logo text
-    let logoHTML = '';
-    for (let i = 0; i < CONFIG.logoText.length; i++) {
-      const char = CONFIG.logoText[i];
-      const isGold = i >= CONFIG.goldStartIndex;
-      const scrambleSet = isGold ? CONFIG.scrambleCharsLower : CONFIG.scrambleChars;
-      const randomChar = scrambleSet[Math.floor(Math.random() * scrambleSet.length)];
-      const goldClass = isGold ? ' is-gold' : '';
-      logoHTML += `<span class="char${goldClass}" data-target="${char}">${randomChar}</span>`;
-    }
-    logo.innerHTML = logoHTML;
-    // logo.classList.add('is-ready'); // logic from snippet
-
-    const chars = logo.querySelectorAll('.char');
-
-    // Set initial states
-    gsap.set(chars, { opacity: 0, y: 12 });
-    if (loader) gsap.set(loader, { opacity: 0 });
-    if (loaderBar) gsap.set(loaderBar, { width: '0%' });
-
-    // Scramble Function
-    function scrambleText(charElements) {
-      return new Promise((resolve) => {
-        let currentIndex = 0;
-        const scrambleIntervals = [];
-
-        // Start scrambling
-        for (let i = 0; i < charElements.length; i++) {
-          ((index) => {
-            const el = charElements[index];
-            const isGold = el.classList.contains('is-gold');
-            const scrambleSet = isGold ? CONFIG.scrambleCharsLower : CONFIG.scrambleChars;
-            scrambleIntervals[index] = setInterval(() => {
-              el.textContent = scrambleSet[Math.floor(Math.random() * scrambleSet.length)];
-            }, CONFIG.scrambleSpeed);
-          })(i);
-        }
-
-        // Resolve one by one
-        function resolveNext() {
-          if (currentIndex >= charElements.length) {
-            resolve();
-            return;
-          }
-          const el = charElements[currentIndex];
-          clearInterval(scrambleIntervals[currentIndex]);
-          el.textContent = el.dataset.target;
-          currentIndex++;
-          setTimeout(resolveNext, CONFIG.resolveDelay);
-        }
-        setTimeout(resolveNext, 400);
-      });
-    }
-
-    // Slide Out Function
-    function slideOutOverlay() {
-      gsap.to(overlay, {
-        yPercent: -100,
-        duration: 0.7,
-        ease: 'power3.inOut',
-        onComplete: () => {
-          hideOverlay(); // This handles display:none and markSeen()
-          // window.dispatchEvent(new CustomEvent('introComplete'));
-        }
-      });
-    }
-
-    // Main Animation Sequence
-    const tl = gsap.timeline();
-    if (loader) {
-      tl.to(loader, { opacity: 1, duration: 0.25, ease: 'power2.out' });
-    }
-    tl.to(chars, {
-      opacity: 1, y: 0, duration: 0.4, stagger: CONFIG.charRevealStagger, ease: 'power3.out'
-    }, 0.1);
-    if (loaderBar) {
-      tl.to(loaderBar, { width: '100%', duration: 2.0, ease: 'power1.inOut' }, 0.2);
-    }
-
-    // Run scramble then slide out
-    setTimeout(() => {
-      scrambleText(chars).then(() => {
-        setTimeout(slideOutOverlay, CONFIG.holdDuration * 1000);
-      });
-    }, 350);
-
-    // Safety fallback
-    setTimeout(() => {
-      const style = window.getComputedStyle(overlay);
-      if (style.display !== 'none' && style.visibility !== 'hidden') {
-        console.warn('[Intro] Safety timeout triggered');
-        slideOutOverlay();
-      }
-    }, CONFIG.safetyTimeout);
-  }
-
-  function cleanupStage() {
-    const stage = document.getElementById("intro-stage");
-    if (!stage) return;
-    stage.innerHTML = "";
-  }
   // -----------------------------
 
 
@@ -1876,19 +1691,7 @@
   }
 
   async function run() {
-    // 1. Check if Intro should run
-    if (hasSeen()) {
-      hideOverlay();
-      return;
-    }
-
-    // 2. Start Intro Animation immediately (Text Scramble)
-    showOverlay();
-    // This is async but we don't wait for it; visuals start immediately
-    runIntroAnimation();
-
-    // 3. Initialize Background Pen (Particles)
-    // Run this in parallel so it doesn't block the intro text start
+    // Initialize Background Pen (Particles)
     const stage = document.getElementById("intro-stage");
     if (stage) {
       const pen = pickRandomPen();
