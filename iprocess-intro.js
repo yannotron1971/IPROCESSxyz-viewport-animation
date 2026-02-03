@@ -197,10 +197,30 @@
         init();
     }
 
+    // ============ STYLE INJECTION ============
+    function injectStyles() {
+        const styleId = 'iprocess-intro-styles';
+        if (document.getElementById(styleId)) return;
+
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = `
+            /* Radial mask to fade out particles in the center */
+            #intro-stage {
+                -webkit-mask-image: radial-gradient(circle at center, transparent 0%, transparent 20%, black 50%);
+                mask-image: radial-gradient(circle at center, transparent 0%, transparent 20%, black 50%);
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
     async function init() {
+        // Inject styles (mask) first
+        injectStyles();
+
         // Ensure GSAP is loaded
         try {
-            await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js");
+            await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js");
             runAnimation();
         } catch (e) {
             console.error("[Intro] Failed to load GSAP", e);
