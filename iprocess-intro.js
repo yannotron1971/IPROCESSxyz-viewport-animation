@@ -22,26 +22,26 @@
     const CONFIG = {
         logoText: 'IPROCESSxyz',
         goldStartIndex: 8,            // Index where 'xyz' starts (0-based)
-        scrambleChars: '01',
-        scrambleCharsLower: '01',
+        scrambleChars: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        scrambleCharsLower: 'abcdefghijklmnopqrstuvwxyz0123456789',
         charRevealStagger: 0.025,     // Delay between each char appearing
         scrambleSpeed: 50,            // Ms between scramble iterations
         resolveDelay: 100,            // Ms between each letter resolving (left to right)
         holdDuration: 0.8,            // Seconds to hold after scramble
         safetyTimeout: 4000,          // Max time before forced removal (ms)
-        oncePerSession: false          // Set to false for testing so it always shows
+        oncePerSession: true          // Only show intro once per browser session
     };
 
     // ============ SESSION CHECK ============
     const SESSION_KEY = 'iprocess_intro_shown';
 
     if (CONFIG.oncePerSession && sessionStorage.getItem(SESSION_KEY)) {
-        // Skip intro - still slide up to avoid abrupt disappearance
-        if (typeof gsap !== 'undefined') {
-            slideOutOverlay();
-        } else {
+        // Skip intro - just remove loading state
+        document.documentElement.classList.remove('is-intro-loading');
+        const overlay = document.querySelector('.intro-overlay');
+        if (overlay) {
             overlay.style.display = 'none';
-            document.documentElement.classList.remove('is-intro-loading');
+            overlay.style.visibility = 'hidden';
         }
         return;
     }
@@ -119,7 +119,7 @@
             };
 
             // Start resolving after a brief scramble period
-            setTimeout(resolveNext, 200);
+            setTimeout(resolveNext, 400);
         });
     }
 
@@ -176,7 +176,7 @@
         }, 0.2);
 
         // 4. Wait for initial reveal, then scramble
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 350));
         await scrambleText(chars);
 
         // 5. Hold for a moment
