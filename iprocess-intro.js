@@ -120,7 +120,7 @@
             };
 
             // Start resolving after a brief scramble period
-            setTimeout(resolveNext, 400);
+            setTimeout(resolveNext, 200);
         });
     }
 
@@ -177,7 +177,7 @@
         }, 0.2);
 
         // 4. Wait for initial reveal, then scramble
-        await new Promise(resolve => setTimeout(resolve, 350));
+        await new Promise(resolve => setTimeout(resolve, 100));
         await scrambleText(chars);
 
         // 5. Hold for a moment
