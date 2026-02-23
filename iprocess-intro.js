@@ -22,8 +22,8 @@
     const CONFIG = {
         logoText: 'IPROCESSxyz',
         goldStartIndex: 8,            // Index where 'xyz' starts (0-based)
-        scrambleChars: '01',
-        scrambleCharsLower: '01',
+        scrambleChars: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ"@$%^&*',
+        scrambleCharsLower: 'abcdefghijklmnopqrstvwxyz',
         charRevealStagger: 0.025,     // Delay between each char appearing
         scrambleSpeed: 50,            // Ms between scramble iterations
         resolveDelay: 100,            // Ms between each letter resolving (left to right)
