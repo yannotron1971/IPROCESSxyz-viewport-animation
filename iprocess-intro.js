@@ -19,6 +19,7 @@
     }
 
     // ============ CONFIGURATION ============
+    // Timing breakdown: 6s particles only → 3s logo loads → 1s hold → slide out
     const CONFIG = {
         logoText: 'IPROCESSxyz',
         goldStartIndex: 8,            // Index where 'xyz' starts (0-based)
@@ -26,9 +27,11 @@
         scrambleCharsLower: 'abcdefghijklmnopqrstvwxyz',
         charRevealStagger: 0.025,     // Delay between each char appearing
         scrambleSpeed: 50,            // Ms between scramble iterations
-        resolveDelay: 100,            // Ms between each letter resolving (left to right)
-        holdDuration: 3.3,            // Seconds to hold after scramble
-        safetyTimeout: 8000,          // Max time before forced removal (ms)
+        resolveDelay: 160,            // Ms between each letter resolving — controls scramble phase length
+        particlesOnlyDuration: 6000,  // Ms of particles-only before logo appears
+        loaderDuration: 9.5,          // Seconds for loader bar to fill (covers full intro)
+        holdDuration: 1.0,            // Seconds to hold after scramble resolves
+        safetyTimeout: 13000,         // Max time before forced removal (ms)
         oncePerSession: true          // Only show intro once per browser session
     };
 
@@ -152,39 +155,42 @@
 
         const tl = gsap.timeline();
 
-        // 1. Fade in loader track
+        // 1. Fade in loader track immediately
         tl.to(loader, {
             opacity: 1,
             duration: 0.25,
             ease: 'power2.out'
         });
 
-        // 2. Reveal characters with stagger
-        tl.to(chars, {
+        // 2. Loader bar fills over the full intro (particles + logo + hold)
+        tl.to(loaderBar, {
+            width: '100%',
+            duration: CONFIG.loaderDuration,
+            ease: 'power1.inOut'
+        }, 0.2);
+
+        // 3. Particles-only phase — logo stays hidden
+        await new Promise(resolve => setTimeout(resolve, CONFIG.particlesOnlyDuration));
+
+        // 4. Reveal characters with stagger
+        gsap.to(chars, {
             opacity: 1,
             y: 0,
             duration: 0.4,
             stagger: CONFIG.charRevealStagger,
             ease: 'power3.out'
-        }, 0.1);
+        });
 
-        // 3. Start loader bar animation (runs alongside scramble)
-        tl.to(loaderBar, {
-            width: '100%',
-            duration: 5.3,
-            ease: 'power1.inOut'
-        }, 0.2);
-
-        // 4. Wait for initial reveal, then scramble
+        // 5. Wait for initial reveal, then scramble
         await new Promise(resolve => setTimeout(resolve, 350));
         await scrambleText(chars);
 
-        // 5. Hold for a moment
+        // 6. Hold
         await new Promise(resolve =>
             setTimeout(resolve, CONFIG.holdDuration * 1000)
         );
 
-        // 6. Slide up overlay
+        // 7. Slide up overlay
         slideOutOverlay();
     }
 
