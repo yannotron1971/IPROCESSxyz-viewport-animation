@@ -27,8 +27,8 @@
         charRevealStagger: 0.025,     // Delay between each char appearing
         scrambleSpeed: 50,            // Ms between scramble iterations
         resolveDelay: 100,            // Ms between each letter resolving (left to right)
-        holdDuration: 0.8,            // Seconds to hold after scramble
-        safetyTimeout: 4000,          // Max time before forced removal (ms)
+        holdDuration: 3.3,            // Seconds to hold after scramble
+        safetyTimeout: 8000,          // Max time before forced removal (ms)
         oncePerSession: true          // Only show intro once per browser session
     };
 
@@ -171,7 +171,7 @@
         // 3. Start loader bar animation (runs alongside scramble)
         tl.to(loaderBar, {
             width: '100%',
-            duration: 2.0,
+            duration: 5.3,
             ease: 'power1.inOut'
         }, 0.2);
 
