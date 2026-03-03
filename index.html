@@ -20,8 +20,8 @@
             position: fixed;
             inset: 0;
             z-index: 0;
-            -webkit-mask-image: radial-gradient(circle at center, transparent 0%, transparent 10%, black 25%);
-            mask-image: radial-gradient(circle at center, transparent 0%, transparent 10%, black 25%);
+            -webkit-mask-image: radial-gradient(circle at center, transparent 0%, transparent 0%, black 0%);
+            mask-image: radial-gradient(circle at center, transparent 0%, transparent 0%, black 0%);
         }
 
         .intro-content {
@@ -40,6 +40,8 @@
             font-size: 4rem;
             font-weight: 700;
             letter-spacing: -0.02em;
+            pointer-events: none;
+            user-select: none;
         }
 
         .intro-logo .char {
@@ -49,6 +51,8 @@
 
         .intro-logo .char.is-gold {
             color: #FFD700;
+            font-variant: small-caps;
+            text-transform: lowercase;
         }
 
         .intro-loader {

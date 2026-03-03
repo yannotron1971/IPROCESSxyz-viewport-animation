@@ -189,7 +189,6 @@
                 }
             });
         }
-        
         // 4. Reveal characters with stagger
         gsap.to(chars, {
             opacity: 1,

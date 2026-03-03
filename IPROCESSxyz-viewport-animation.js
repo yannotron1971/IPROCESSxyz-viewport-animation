@@ -1692,7 +1692,7 @@
 
   async function run() {
     // Initialize Background Pen (Particles)
-    const stage = document.getElementById("intro-stage");
+    const stage = document.querySelector("#intro-stage, .intro-stage");
     if (stage) {
       const pen = pickRandomPen();
       if (pen) {
@@ -1708,8 +1708,11 @@
     }
   }
 
-  // Run after Webflow finishes
-  if (document.readyState === "complete") run();
-  else window.addEventListener("load", run);
+  // Run immediately when DOM is ready so it synchronizes with the intro overlay
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", run);
+  } else {
+    run();
+  }
 })();
 
