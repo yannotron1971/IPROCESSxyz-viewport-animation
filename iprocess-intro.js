@@ -175,11 +175,18 @@
         // Let the radial gradient circle expand/appear at the same time the letters do
         const stageEl = document.getElementById('intro-stage');
         if (stageEl) {
-            gsap.to(stageEl, {
-                "--mask-inner": "10%",
-                "--mask-outer": "25%",
+            // Tween a plain object to avoid CSS variable parsing bugs in Webflow/Safari
+            const maskObj = { inner: 0, outer: 0 };
+            gsap.to(maskObj, {
+                inner: 10,
+                outer: 25,
                 duration: 0.5,
-                ease: "power2.out"
+                ease: "power2.out",
+                onUpdate: () => {
+                    const gradient = `radial-gradient(circle at center, transparent 0%, transparent ${maskObj.inner}%, black ${maskObj.outer}%)`;
+                    stageEl.style.webkitMaskImage = gradient;
+                    stageEl.style.maskImage = gradient;
+                }
             });
         }
         
