@@ -173,7 +173,7 @@
         await new Promise(resolve => setTimeout(resolve, CONFIG.particlesOnlyDuration));
 
         // Let the radial gradient circle expand/appear at the same time the letters do
-        const stageEl = document.getElementById('intro-stage');
+        const stageEl = document.querySelector('#intro-stage, .intro-stage');
         if (stageEl) {
             // Tween a plain object to avoid CSS variable parsing bugs in Webflow/Safari
             const maskObj = { inner: 0, outer: 0 };
