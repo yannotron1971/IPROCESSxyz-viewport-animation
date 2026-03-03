@@ -183,9 +183,9 @@
                 duration: 0.5,
                 ease: "power2.out",
                 onUpdate: () => {
-                    const gradient = `radial-gradient(circle at center, transparent 0%, transparent ${maskObj.inner}%, black ${maskObj.outer}%)`;
-                    stageEl.style.webkitMaskImage = gradient;
-                    stageEl.style.maskImage = gradient;
+                    const gradient = `radial-gradient(circle at center, transparent 0%, transparent ${maskObj.inner}%, rgba(0,0,0,1) ${maskObj.outer}%)`;
+                    stageEl.style.setProperty('-webkit-mask-image', gradient);
+                    stageEl.style.setProperty('mask-image', gradient);
                 }
             });
         }
