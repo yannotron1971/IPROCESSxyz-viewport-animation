@@ -172,6 +172,17 @@
         // 3. Particles-only phase — logo stays hidden
         await new Promise(resolve => setTimeout(resolve, CONFIG.particlesOnlyDuration));
 
+        // Let the radial gradient circle expand/appear at the same time the letters do
+        const stageEl = document.getElementById('intro-stage');
+        if (stageEl) {
+            gsap.to(stageEl, {
+                "--mask-inner": "10%",
+                "--mask-outer": "25%",
+                duration: 0.5,
+                ease: "power2.out"
+            });
+        }
+        
         // 4. Reveal characters with stagger
         gsap.to(chars, {
             opacity: 1,
