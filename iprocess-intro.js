@@ -20,6 +20,9 @@
 
     // ============ CONFIGURATION ============
     // Timing breakdown: 6s particles only → 3s logo loads → 1s hold → slide out
+    // Single parameter to control total intro duration
+    const INTRO_DURATION = 3; // Total seconds for intro (adjust this one value)
+    
     const CONFIG = {
         logoText: 'IPROCESSxyz',
         goldStartIndex: 8,            // Index where 'xyz' starts (0-based)
@@ -28,10 +31,11 @@
         charRevealStagger: 0.025,     // Delay between each char appearing
         scrambleSpeed: 50,            // Ms between scramble iterations
         resolveDelay: 160,            // Ms between each letter resolving — controls scramble phase length
-        particlesOnlyDuration: 6000,  // Ms of particles-only before logo appears
-        loaderDuration: 9.5,          // Seconds for loader bar to fill (covers full intro)
-        holdDuration: 1.0,            // Seconds to hold after scramble resolves
-        safetyTimeout: 13000,         // Max time before forced removal (ms)
+        // Derived from INTRO_DURATION proportionally
+        particlesOnlyDuration: INTRO_DURATION * 0.6 * 1000,  // 60% of total time
+        loaderDuration: INTRO_DURATION * 0.95,               // 95% of total time
+        holdDuration: INTRO_DURATION * 0.1,                  // 10% of total time
+        safetyTimeout: INTRO_DURATION * 1.3 * 1000,          // 130% of total time
         oncePerSession: true          // Only show intro once per browser session
     };
 
