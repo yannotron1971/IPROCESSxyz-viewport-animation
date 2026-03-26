@@ -191,6 +191,8 @@
           if (e.button === 2) mR = false;
         });
 
+        let resizeTimer = null;
+
         canvas.addEventListener('contextmenu', (e) => e.preventDefault());
         window.addEventListener('mouseup', (e) => { if (e.button === 2) mR = false; });
         window.addEventListener('resize', () => {
