@@ -21,7 +21,7 @@
     // ============ CONFIGURATION ============
     // Timing breakdown: 6s particles only → 3s logo loads → 1s hold → slide out
     // Single parameter to control total intro duration
-    const INTRO_DURATION = 3; // Total seconds for intro (adjust this one value)
+    const INTRO_DURATION = 10; // Total seconds for intro (adjust this one value)
     
     const CONFIG = {
         logoText: 'IPROCESSxyz',
