@@ -215,6 +215,18 @@
         slideOutOverlay();
     }
 
+    const t0 = performance.now();
+
+    await new Promise(resolve => setTimeout(resolve, CONFIG.particlesOnlyDuration));
+    console.log("particlesOnlyDuration done", performance.now()-t0);
+    
+    await scrambleText(chars);
+    await new Promise(resolve => setTimeout(resolve, CONFIG.holdDuration * 1000));
+    console.log("scramble+hold done", performance.now()-t0);
+    
+    slideOutOverlay();
+    console.log("intro complete", performance.now()-t0);
+
     // ============ EXECUTE ============
 
     // Run animation when DOM is ready
