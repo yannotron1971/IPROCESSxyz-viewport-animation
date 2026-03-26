@@ -157,6 +157,8 @@
         gsap.set(loader, { opacity: 0 });
         gsap.set(loaderBar, { width: '0%' });
 
+        const t0 = performance.now();
+        
         const tl = gsap.timeline();
 
         // 1. Fade in loader track immediately
@@ -172,6 +174,20 @@
             duration: CONFIG.loaderDuration,
             ease: 'power1.inOut'
         }, 0.2);
+
+        await new Promise(resolve => setTimeout(resolve, CONFIG.particlesOnlyDuration));
+        console.log("particlesOnlyDuration done", performance.now()-t0);
+    
+        // ... stage mask code ...
+    
+        await new Promise(resolve => setTimeout(resolve, 350));
+        await scrambleText(chars);
+    
+        await new Promise(resolve => setTimeout(resolve, CONFIG.holdDuration * 1000));
+        console.log("scramble+hold done", performance.now()-t0);
+    
+        slideOutOverlay();
+        console.log("intro complete", performance.now()-t0);
 
         // 3. Particles-only phase — logo stays hidden
         await new Promise(resolve => setTimeout(resolve, CONFIG.particlesOnlyDuration));
@@ -214,18 +230,6 @@
         // 7. Slide up overlay
         slideOutOverlay();
     }
-
-    const t0 = performance.now();
-
-    await new Promise(resolve => setTimeout(resolve, CONFIG.particlesOnlyDuration));
-    console.log("particlesOnlyDuration done", performance.now()-t0);
-    
-    await scrambleText(chars);
-    await new Promise(resolve => setTimeout(resolve, CONFIG.holdDuration * 1000));
-    console.log("scramble+hold done", performance.now()-t0);
-    
-    slideOutOverlay();
-    console.log("intro complete", performance.now()-t0);
 
     // ============ EXECUTE ============
 
