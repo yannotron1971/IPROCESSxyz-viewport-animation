@@ -152,56 +152,23 @@
     // ============ MAIN ANIMATION TIMELINE ============
 
     async function runAnimation() {
-        // Set initial states (moved here to ensure GSAP is loaded)
         gsap.set(chars, { opacity: 0, y: 12 });
         gsap.set(loader, { opacity: 0 });
         gsap.set(loaderBar, { width: '0%' });
-
-        const t0 = performance.now();
-        
+    
         const tl = gsap.timeline();
-
-        // 1. Fade in loader track immediately
-        tl.to(loader, {
-            opacity: 1,
-            duration: 0.25,
-            ease: 'power2.out'
-        });
-
-        // 2. Loader bar fills over the full intro (particles + logo + hold)
-        tl.to(loaderBar, {
-            width: '100%',
-            duration: CONFIG.loaderDuration,
-            ease: 'power1.inOut'
-        }, 0.2);
-
+        tl.to(loader, { opacity: 1, duration: 0.25, ease: 'power2.out' });
+        tl.to(loaderBar, { width: '100%', duration: CONFIG.loaderDuration, ease: 'power1.inOut' }, 0.2);
+    
+        // 1. Particles-only phase
         await new Promise(resolve => setTimeout(resolve, CONFIG.particlesOnlyDuration));
-        console.log("particlesOnlyDuration done", performance.now()-t0);
     
-        // ... stage mask code ...
-    
-        await new Promise(resolve => setTimeout(resolve, 350));
-        await scrambleText(chars);
-    
-        await new Promise(resolve => setTimeout(resolve, CONFIG.holdDuration * 1000));
-        console.log("scramble+hold done", performance.now()-t0);
-    
-        slideOutOverlay();
-        console.log("intro complete", performance.now()-t0);
-
-        // 3. Particles-only phase — logo stays hidden
-        await new Promise(resolve => setTimeout(resolve, CONFIG.particlesOnlyDuration));
-
-        // Let the radial gradient circle expand/appear at the same time the letters do
+        // 2. Expand mask + reveal chars (BEFORE scramble)
         const stageEl = document.querySelector('#intro-stage, .intro-stage');
         if (stageEl) {
-            // Tween a plain object to avoid CSS variable parsing bugs in Webflow/Safari
             const maskObj = { inner: 0, outer: 0 };
             gsap.to(maskObj, {
-                inner: 10,
-                outer: 25,
-                duration: 0.5,
-                ease: "power2.out",
+                inner: 10, outer: 25, duration: 0.5, ease: "power2.out",
                 onUpdate: () => {
                     const gradient = `radial-gradient(circle at center, transparent 0%, transparent ${maskObj.inner}%, rgba(0,0,0,1) ${maskObj.outer}%)`;
                     stageEl.style.setProperty('-webkit-mask-image', gradient);
@@ -209,25 +176,16 @@
                 }
             });
         }
-        // 4. Reveal characters with stagger
-        gsap.to(chars, {
-            opacity: 1,
-            y: 0,
-            duration: 0.4,
-            stagger: CONFIG.charRevealStagger,
-            ease: 'power3.out'
-        });
-
-        // 5. Wait for initial reveal, then scramble
+    
+        // 3. Make chars visible
+        gsap.to(chars, { opacity: 1, y: 0, duration: 0.4, stagger: CONFIG.charRevealStagger, ease: 'power3.out' });
+    
+        // 4. Scramble (now visible)
         await new Promise(resolve => setTimeout(resolve, 350));
         await scrambleText(chars);
-
-        // 6. Hold
-        await new Promise(resolve =>
-            setTimeout(resolve, CONFIG.holdDuration * 1000)
-        );
-
-        // 7. Slide up overlay
+    
+        // 5. Hold, then exit
+        await new Promise(resolve => setTimeout(resolve, CONFIG.holdDuration * 1000));
         slideOutOverlay();
     }
 
