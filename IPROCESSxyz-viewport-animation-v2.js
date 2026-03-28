@@ -742,32 +742,148 @@
       name: "holdParticles2",
       deps: [],
       mount(stage) {
-        stage.innerHTML = '<canvas id="canvas" style="display:block; width:100%; height:100%;"></canvas>';
-        const canvas = stage.querySelector('#canvas');
+        const canvas = document.createElement('canvas');
+        canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:block;background:transparent;opacity:0;animation:holdP2FadeIn 600ms ease forwards;z-index:0';
+        const styleEl = document.createElement('style');
+        styleEl.textContent = '@keyframes holdP2FadeIn{to{opacity:1}}';
+        stage.appendChild(styleEl);
+        stage.appendChild(canvas);
+
         const ctx = canvas.getContext('2d');
         canvas.width = stage.clientWidth;
         canvas.height = stage.clientHeight;
 
-        const particles = [];
+        const mouse = { x: undefined, y: undefined };
+        const holdParticles = [];
         let hue = 0;
-        let mouseX, mouseY;
+
+        var MAX_CAP         = 16384;
+        var EXPLODE_R       = 200;
+        var CLICK_THRESHOLD = 200;
+        var mL = false, mR = false, mM = false;
+        var clickTimer = null;
+
+        function calcMax() {
+          return Math.min(Math.round(canvas.width * canvas.height / 253), MAX_CAP);
+        }
+        function calcBurst() {
+          return Math.max(10, Math.round(canvas.width * canvas.height / 41472));
+        }
+
+        var MAX_P       = calcMax();
+        var CLICK_BURST = calcBurst();
+
+        window.addEventListener('resize', function () {
+          canvas.width  = stage.clientWidth;
+          canvas.height = stage.clientHeight;
+          MAX_P         = calcMax();
+          CLICK_BURST   = calcBurst();
+        });
+
+        canvas.addEventListener('mousemove', function (event) {
+          mouse.x = event.clientX - canvas.getBoundingClientRect().left;
+          mouse.y = event.clientY - canvas.getBoundingClientRect().top;
+          const particleCount = canvas.width < 768 ? 1 : 2;
+          for (let i = 0; i < particleCount; i++) {
+            if (holdParticles.length < MAX_P) holdParticles.push(new Particle());
+          }
+        });
+
+        canvas.addEventListener('touchstart', function (event) {
+          const touch = event.touches[0];
+          const rect = canvas.getBoundingClientRect();
+          mouse.x = touch.clientX - rect.left;
+          mouse.y = touch.clientY - rect.top;
+          for (let i = 0; i < CLICK_BURST; i++) {
+            if (holdParticles.length < MAX_P) holdParticles.push(new Particle());
+          }
+        });
+
+        canvas.addEventListener('touchmove', function (event) {
+          event.preventDefault();
+          const touch = event.touches[0];
+          const rect = canvas.getBoundingClientRect();
+          mouse.x = touch.clientX - rect.left;
+          mouse.y = touch.clientY - rect.top;
+          const particleCount = canvas.width < 768 ? 1 : 2;
+          for (let i = 0; i < particleCount; i++) {
+            if (holdParticles.length < MAX_P) holdParticles.push(new Particle());
+          }
+        });
+
+        canvas.addEventListener('mousedown', function (e) {
+          if (e.button === 0) {
+            mL = true;
+            clickTimer = setTimeout(function () { clickTimer = null; }, CLICK_THRESHOLD);
+          }
+          if (e.button === 1) mM = true;
+          if (e.button === 2) mR = true;
+        });
+
+        canvas.addEventListener('mouseup', function (e) {
+          if (e.button === 0) {
+            mL = false;
+            if (clickTimer !== null) {
+              clearTimeout(clickTimer);
+              clickTimer = null;
+              const rect = canvas.getBoundingClientRect();
+              mouse.x = e.clientX - rect.left;
+              mouse.y = e.clientY - rect.top;
+              for (let i = 0; i < CLICK_BURST; i++) {
+                if (holdParticles.length < MAX_P) holdParticles.push(new Particle());
+              }
+            }
+          }
+          if (e.button === 1) mM = false;
+          if (e.button === 2) mR = false;
+        });
+
+        canvas.addEventListener('contextmenu', function (e) {
+          e.preventDefault();
+        });
+
+        window.addEventListener('mouseup', function (e) {
+          if (e.button === 2) mR = false;
+        });
 
         class Particle {
-          constructor(x, y) {
-            this.x = x;
-            this.y = y;
-            this.vx = (Math.random() - 0.5) * 4;
-            this.vy = (Math.random() - 0.5) * 4 - 1;
-            this.size = Math.random() * 3 + 1;
-            this.color = 'hsl(' + hue + ', 100%, 50%)';
+          constructor() {
+            this.x = mouse.x;
+            this.y = mouse.y;
+            this.size = Math.random() * 5 + 1;
+            this.speedX = Math.random() * 3 - 1.5;
+            this.speedY = Math.random() * 3 - 1.5;
+            this.color = `hsl(${hue}, 100%, 50%)`;
           }
+
           update() {
-            this.x += this.vx;
-            this.y += this.vy;
-            this.vy -= 0.1;
-            if (this.size >= 1) this.size -= 0.08;
+            if (mL && clickTimer === null && mouse.x !== undefined) {
+              this.speedX += (mouse.x - this.x) * 0.0003;
+              this.speedY += (mouse.y - this.y) * 0.0003;
+            }
+
+            if ((mR || mM) && mouse.x !== undefined) {
+              const ddx = this.x - mouse.x;
+              const ddy = this.y - mouse.y;
+              const dist = Math.sqrt(ddx * ddx + ddy * ddy);
+              if (mR && dist < EXPLODE_R && dist > 0) {
+                this.speedX += (ddx / dist) * 2;
+                this.speedY += (ddy / dist) * 2;
+              }
+              if (mM && dist < EXPLODE_R) {
+                const f = dist / EXPLODE_R;
+                this.speedX *= f;
+                this.speedY *= f;
+              }
+            }
+
+            this.x += this.speedX;
+            this.y += this.speedY;
+            if (this.size >= 1) this.size -= 0.2;
           }
+
           draw() {
+            if (this.size <= 0) return;
             ctx.fillStyle = this.color;
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
@@ -775,31 +891,27 @@
           }
         }
 
-        window.addEventListener('click', (e) => {
-          const rect = canvas.getBoundingClientRect();
-          mouseX = e.clientX - rect.left;
-          mouseY = e.clientY - rect.top;
-          for (let i = 0; i < 8; i++) {
-            particles.push(new Particle(mouseX + (Math.random() - 0.5) * 30, mouseY + (Math.random() - 0.5) * 30));
+        function handleParticles() {
+          for (let i = 0; i < holdParticles.length; i++) {
+            holdParticles[i].update();
+            holdParticles[i].draw();
+            if (holdParticles[i].size <= 0.5) {
+              holdParticles.splice(i, 1);
+              i--;
+            }
           }
-        });
-
-        function animate() {
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.015)';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          for (let i = particles.length - 1; i >= 0; i--) {
-            particles[i].update();
-            particles[i].draw();
-            if (particles[i].size <= 0.3) particles.splice(i, 1);
-          }
-          hue = (hue + 2) % 360;
-          requestAnimationFrame(animate);
         }
 
-        window.addEventListener('resize', () => {
-          canvas.width = stage.clientWidth;
-          canvas.height = stage.clientHeight;
-        });
+        function animate() {
+          var _prevComp = ctx.globalCompositeOperation;
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.fillStyle = 'rgba(0,0,0,0.01)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.globalCompositeOperation = _prevComp;
+          handleParticles();
+          hue++;
+          requestAnimationFrame(animate);
+        }
 
         animate();
       }
@@ -832,3 +944,4 @@
     run();
   }
 })();
+
