@@ -450,6 +450,7 @@
             this.size -= this.decay;
           }
           draw(ctx) {
+            if (this.size <= 0) return;
             ctx.fillStyle = this.color;
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
