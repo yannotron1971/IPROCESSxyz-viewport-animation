@@ -2250,100 +2250,24 @@
     }
   ];
 
-  // ── TESTING MODE ──────────────────────────────────────────────────────────
-  // To re-enable the randomiser: delete everything between the dashed comments
-  // and replace with:
-  //
-  //   function pickRandomPen() {
-  //     return pens[Math.floor(Math.random() * pens.length)];
-  //   }
-  //
-  //   async function run() {
-  //     const stage = document.querySelector("#intro-stage, .intro-stage");
-  //     if (stage) {
-  //       const pen = pickRandomPen();
-  //       if (pen) {
-  //         console.log("%c Running Pen: " + pen.welcomeName + " – " + pen.name, "background: #222; color: #bada55; font-size: 20px; padding: 10px; border-radius: 5px;");
-  //         (async () => {
-  //           for (const dep of pen.deps) {
-  //             try { await loadScript(dep); } catch (e) { console.error("Failed to load", dep, e); }
-  //           }
-  //           try { pen.mount(stage); } catch (e) { console.error("Pen error:", e); }
-  //         })();
-  //       }
-  //     }
-  //   }
-  //
-  //   if (document.readyState === "loading") {
-  //     document.addEventListener("DOMContentLoaded", run);
-  //   } else {
-  //     run();
-  //   }
-  // ──────────────────────────────────────────────────────────────────────────
+  function pickRandomPen() {
+    return pens[Math.floor(Math.random() * pens.length)];
+  }
 
-  var currentPenIndex = 0;
-
-  function mountPen(index) {
+  async function run() {
     const stage = document.querySelector("#intro-stage, .intro-stage");
-    if (!stage) return;
-    // Remove all children except the test UI overlay
-    Array.from(stage.children).forEach(function (child) {
-      if (child.id !== "iprocess-test-ui") stage.removeChild(child);
-    });
-    const pen = pens[index];
-    console.log("%c Running Pen: " + pen.welcomeName + " – " + pen.name, "background: #222; color: #bada55; font-size: 20px; padding: 10px; border-radius: 5px;");
-    document.getElementById("iprocess-pen-label").textContent = pen.welcomeName + " \u2013 " + pen.name;
-    (async () => {
-      for (const dep of pen.deps) {
-        try { await loadScript(dep); } catch (e) { console.error("Failed to load", dep, e); }
+    if (stage) {
+      const pen = pickRandomPen();
+      if (pen) {
+        console.log("%c Running Pen: " + pen.welcomeName + " – " + pen.name, "background: #222; color: #bada55; font-size: 20px; padding: 10px; border-radius: 5px;");
+        (async () => {
+          for (const dep of pen.deps) {
+            try { await loadScript(dep); } catch (e) { console.error("Failed to load", dep, e); }
+          }
+          try { pen.mount(stage); } catch (e) { console.error("Pen error:", e); }
+        })();
       }
-      try { pen.mount(stage); } catch (e) { console.error("Pen error:", e); }
-    })();
-  }
-
-  function createTestUI(stage) {
-    const ui = document.createElement("div");
-    ui.id = "iprocess-test-ui";
-    // position:absolute inside the stage so it shares the same stacking context as the canvases
-    ui.style.cssText = "position:absolute;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;align-items:center;gap:12px;background:rgba(0,0,0,0.75);border:2px solid #ffffff;padding:10px 18px;border-radius:999px;font-family:sans-serif;font-size:14px;color:#ffffff;user-select:none;box-shadow:0 4px 16px rgba(0,0,0,0.6);pointer-events:auto;";
-
-    const label = document.createElement("span");
-    label.id = "iprocess-pen-label";
-    label.style.cssText = "min-width:220px;text-align:center;color:#ffffff;font-weight:700;letter-spacing:0.02em;";
-
-    const btnStyle = "background:rgba(255,255,255,0.2);border:2px solid #ffffff;color:#ffffff;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;font-weight:bold;";
-
-    const btnPrev = document.createElement("button");
-    btnPrev.textContent = "\u276E";
-    btnPrev.style.cssText = btnStyle;
-
-    const btnNext = document.createElement("button");
-    btnNext.textContent = "\u276F";
-    btnNext.style.cssText = btnStyle;
-
-    btnPrev.addEventListener("click", function () {
-      currentPenIndex = (currentPenIndex - 1 + pens.length) % pens.length;
-      mountPen(currentPenIndex);
-    });
-
-    btnNext.addEventListener("click", function () {
-      currentPenIndex = (currentPenIndex + 1) % pens.length;
-      mountPen(currentPenIndex);
-    });
-
-    ui.appendChild(btnPrev);
-    ui.appendChild(label);
-    ui.appendChild(btnNext);
-    stage.appendChild(ui);
-  }
-
-  function run() {
-    const stage = document.querySelector("#intro-stage, .intro-stage");
-    if (!stage) return;
-    // Ensure stage has a positioning context so absolute children work correctly
-    if (getComputedStyle(stage).position === "static") stage.style.position = "relative";
-    createTestUI(stage);
-    mountPen(currentPenIndex);
+    }
   }
 
   if (document.readyState === "loading") {
