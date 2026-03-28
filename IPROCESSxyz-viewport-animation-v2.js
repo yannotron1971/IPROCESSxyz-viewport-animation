@@ -2286,7 +2286,10 @@
   function mountPen(index) {
     const stage = document.querySelector("#intro-stage, .intro-stage");
     if (!stage) return;
-    stage.innerHTML = "";
+    // Remove all children except the test UI overlay
+    Array.from(stage.children).forEach(function (child) {
+      if (child.id !== "iprocess-test-ui") stage.removeChild(child);
+    });
     const pen = pens[index];
     console.log("%c Running Pen: " + pen.welcomeName + " – " + pen.name, "background: #222; color: #bada55; font-size: 20px; padding: 10px; border-radius: 5px;");
     document.getElementById("iprocess-pen-label").textContent = pen.welcomeName + " \u2013 " + pen.name;
@@ -2298,16 +2301,17 @@
     })();
   }
 
-  function createTestUI() {
+  function createTestUI(stage) {
     const ui = document.createElement("div");
     ui.id = "iprocess-test-ui";
-    ui.style.cssText = "position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;align-items:center;gap:12px;background:rgba(0,0,0,0.75);border:1px solid rgba(255,255,255,0.3);padding:10px 18px;border-radius:999px;font-family:sans-serif;font-size:14px;color:#ffffff;user-select:none;box-shadow:0 2px 12px rgba(0,0,0,0.5);";
+    // position:absolute inside the stage so it shares the same stacking context as the canvases
+    ui.style.cssText = "position:absolute;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;align-items:center;gap:12px;background:rgba(0,0,0,0.75);border:2px solid #ffffff;padding:10px 18px;border-radius:999px;font-family:sans-serif;font-size:14px;color:#ffffff;user-select:none;box-shadow:0 4px 16px rgba(0,0,0,0.6);pointer-events:auto;";
 
     const label = document.createElement("span");
     label.id = "iprocess-pen-label";
-    label.style.cssText = "min-width:220px;text-align:center;color:#ffffff;font-weight:600;letter-spacing:0.02em;";
+    label.style.cssText = "min-width:220px;text-align:center;color:#ffffff;font-weight:700;letter-spacing:0.02em;";
 
-    const btnStyle = "background:rgba(255,255,255,0.15);border:2px solid #ffffff;color:#ffffff;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;font-weight:bold;";
+    const btnStyle = "background:rgba(255,255,255,0.2);border:2px solid #ffffff;color:#ffffff;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;font-weight:bold;";
 
     const btnPrev = document.createElement("button");
     btnPrev.textContent = "\u276E";
@@ -2330,11 +2334,15 @@
     ui.appendChild(btnPrev);
     ui.appendChild(label);
     ui.appendChild(btnNext);
-    document.body.appendChild(ui);
+    stage.appendChild(ui);
   }
 
   function run() {
-    createTestUI();
+    const stage = document.querySelector("#intro-stage, .intro-stage");
+    if (!stage) return;
+    // Ensure stage has a positioning context so absolute children work correctly
+    if (getComputedStyle(stage).position === "static") stage.style.position = "relative";
+    createTestUI(stage);
     mountPen(currentPenIndex);
   }
 
