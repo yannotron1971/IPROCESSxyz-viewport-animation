@@ -2301,19 +2301,21 @@
   function createTestUI() {
     const ui = document.createElement("div");
     ui.id = "iprocess-test-ui";
-    ui.style.cssText = "position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;align-items:center;gap:10px;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);padding:8px 14px;border-radius:999px;font-family:sans-serif;font-size:13px;color:#fff;user-select:none;";
+    ui.style.cssText = "position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;align-items:center;gap:12px;background:rgba(0,0,0,0.75);border:1px solid rgba(255,255,255,0.3);padding:10px 18px;border-radius:999px;font-family:sans-serif;font-size:14px;color:#ffffff;user-select:none;box-shadow:0 2px 12px rgba(0,0,0,0.5);";
 
     const label = document.createElement("span");
     label.id = "iprocess-pen-label";
-    label.style.cssText = "min-width:220px;text-align:center;";
+    label.style.cssText = "min-width:220px;text-align:center;color:#ffffff;font-weight:600;letter-spacing:0.02em;";
+
+    const btnStyle = "background:rgba(255,255,255,0.15);border:2px solid #ffffff;color:#ffffff;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;font-weight:bold;";
 
     const btnPrev = document.createElement("button");
     btnPrev.textContent = "\u276E";
-    btnPrev.style.cssText = "background:none;border:1px solid rgba(255,255,255,0.4);color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;line-height:1;";
+    btnPrev.style.cssText = btnStyle;
 
     const btnNext = document.createElement("button");
     btnNext.textContent = "\u276F";
-    btnNext.style.cssText = btnPrev.style.cssText;
+    btnNext.style.cssText = btnStyle;
 
     btnPrev.addEventListener("click", function () {
       currentPenIndex = (currentPenIndex - 1 + pens.length) % pens.length;
